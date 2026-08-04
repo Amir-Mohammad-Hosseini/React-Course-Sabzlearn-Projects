@@ -1,8 +1,29 @@
 import { Link } from "react-router";
 import SectionTitle from "../Components/Common/SectionTitle";
 import InputField from "../Components/Templates/ContactUS/InputField";
+import { useMutation } from "@tanstack/react-query";
+import { contactMutation } from "../lib/TanstackQuery/Mutation/contactMutation";
+import { contactSchema } from "../lib/Zod/contactSchema";
+import { toast } from "sonner";
+import { globalValidate } from "../lib/Zod/globalValidator";
 
 const ContactUSPage = () => {
+  const { mutate, isPending } = useMutation(contactMutation());
+
+  const handleSubmitContactForm = (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const contactDatas = Object.fromEntries(formData);
+
+    const { isSuccess, message } = globalValidate(contactSchema, contactDatas);
+
+    if (isSuccess) {
+      mutate(contactDatas);
+    } else {
+      toast.error(message);
+    }
+  };
+
   return (
     <main className="my-20 container" id="contact-us">
       <SectionTitle
@@ -10,7 +31,8 @@ const ContactUSPage = () => {
         description="از طریق فرم زیر با ما تماس بگیرید و تیم فنی شاپینو در اسرع وقت به راهنمایی شما پاسخ خواهند داد."
       />
 
-      <div
+      <form
+        onSubmit={handleSubmitContactForm}
         id="contact-area"
         className="grid grid-cols-2 gap-10 p-5 border rounded-3xl border-neutral-300 mt-10"
       >
@@ -21,18 +43,18 @@ const ContactUSPage = () => {
           </p>
           <div className="grid grid-cols-2 gap-5 **:w-full">
             <InputField
+              name="name"
               placeholder="مثال: امین سعیدی"
               label="نام و نام خانوادگی"
             />
-            <InputField placeholder="مثال: 09911871596" label="شماره موبایل" />
+            <InputField
+              name="phone"
+              placeholder="مثال: 09911871596"
+              label="شماره موبایل"
+            />
 
             <InputField
-              type="email"
-              placeholder="مثال: sabzshop@support.ir"
-              fullWidth
-              label="آدرس ایمیل"
-            />
-            <InputField
+              name="subject"
               type="text"
               placeholder="مثال: مرجوع کردن محصول"
               fullWidth
@@ -47,10 +69,10 @@ const ContactUSPage = () => {
                 محتوا:
               </label>
               <textarea
+                name="content"
                 id="contact-message"
                 className="h-10 rounded-md mt-2.5 border text-sm py-4 min-h-[140px] border-neutral-200 ring-offset-2 px-4 duration-150 focus-within:ring-4 ring-sky-400/40 focus-within:outline-none"
                 placeholder="مثال: قصد مرجوعی محصول با شناسه #124214 را دارم"
-                name="contact-message"
               ></textarea>
             </div>
           </div>
@@ -60,8 +82,12 @@ const ContactUSPage = () => {
               انصراف
             </Link>
 
-            <button className=" bg-linear-to-t from-blue-600 px-4 py-2.5 rounded-md text-white cursor-pointer hover:opacity-90 focus-within:ring-4 ring-sky-300/50 ring-offset-2 duration-150 to-blue-400 max-w-max ">
-              ثبت و ارسال
+            <button
+              className=" bg-linear-to-t from-blue-600 px-4 py-2.5 rounded-md text-white cursor-pointer hover:opacity-90 focus-within:ring-4 ring-sky-300/50 ring-offset-2 duration-150 to-blue-400 max-w-max "
+              type="submit"
+              disabled={isPending}
+            >
+              {isPending ? "درحال ارسال..." : " ثبت و ارسال"}
             </button>
           </div>
         </div>
@@ -71,7 +97,7 @@ const ContactUSPage = () => {
             src="/assets/static/contact-us.png"
           />
         </div>
-      </div>
+      </form>
       <div className="space-y-10 my-10">
         <SectionTitle
           text="مراجعه حضوری"
